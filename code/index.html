@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<!-- Load d3.js -->
+<script src="https://d3js.org/d3.v4.js"></script>
+
+<!-- Create a div where the graph will take place -->
+<div id="my_dataviz"></div>
+
+<script>
+
+//set the dimensions and margins of the graph
+var margin = {top: 10, right: 20, bottom: 30, left: 50},
+    width = 800 - margin.left - margin.right,
+    height = 420 - margin.top - margin.bottom;
+
+// append the svg object to the body of the page
+var svg = d3.select("#my_dataviz")
+  .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform",
+          "translate(" + margin.left + "," + margin.top + ")");
+    
+  //Read the data
+  d3.csv("data/IMDb-movies.csv", function(data) {
+
+
+
+    //we only want to look at movies from the USA
+    data = data.filter(function(row) {
+        return row['country'] == 'USA';
+    })
+
+    //convert budget from string to int, and remove dollar sign
+    data.forEach(function(d) {
+        d.budget = +d.budget.substring(2);
+    });
+    
+    //only look at movies with a budget over 1 million dollars
+    data = data.filter(function(row) {
+        return  row['votes'] >= 100000 && row['budget'] != null;
+    })
+
+    //convert budget from string to int, and remove dollar sign
+    data.forEach(function(d) {
+        var words = d.genre.split(" ");
+
+        d.genre = words[0];
+      console.log(d.genre);
+    });
+
+    var maxBudget = d3.max(data, function(d) { return +d.budget; });
+    
+    // Add X axis
+    var x = d3.scaleLinear()
+      .domain([0, maxBudget])
+      .range([ 0, width]);
+    svg.append("g")
+      .attr("transform", "translate(0," + height + ")")
+      .call(d3.axisBottom(x));
+  
+    // Add Y axis
+    var y = d3.scaleLinear()
+      .domain([0, 10])
+      .range([ height, 0]);
+    svg.append("g")
+      .call(d3.axisLeft(y));
+
+    // Color scale: give me a specie name, I return a color
+    var color = d3.scaleOrdinal()
+      .domain(["Drama", "Action", "Horror" , "Comedy", "Thriller", "History", "Music", "Crime", "Animation"])
+      .range([ "#F8766D", "#00BA38", "#619CFF", "#cbaabe", "#ee7d52", "#7f974a", "#157e84", "#778d7c", "#9c1a74"])
+      
+    // Add dots
+    svg.append('g')
+      .selectAll("dot")
+      .data(data)
+      .enter()
+      .append("circle")
+        .attr("cx", function (d) { return x(d.budget); } )
+        .attr("cy", function (d) { return y(d.avg_vote); } )
+        .attr("r", 1.5)
+        .style("fill", function (d) { return color(d.genre) } )
+  
+  })
+
+  
+  </script>
