@@ -4,6 +4,9 @@
 <!-- Load d3.js -->
 <script src="https://d3js.org/d3.v4.js"></script>
 
+<!-- Add a radio button -->
+<input type="number" id="buttonXlim" value=10000>
+
 <!-- Load color scale -->
 <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
 
@@ -25,8 +28,8 @@
 <script>
 
 //set the dimensions and margins of the graph
-var margin = {top: 20, right: 20, bottom: 30, left: 50},
-    width = 800 - margin.left - margin.right,
+var margin = {top: 20, right: 20, bottom: 50, left: 50},
+    width = 1000 - margin.left - margin.right,
     height = 420 - margin.top - margin.bottom;
 
 // append the svg object to the body of the page
@@ -39,110 +42,154 @@ var svg = d3.select("#my_dataviz")
           "translate(" + margin.left + "," + margin.top + ")");
     
   //Read the data
-  d3.csv("data/IMDb-movies.csv", function(data) {
+  d3.csv("data/reddit_wsb.csv", function(data1){
 
+    var timeParse = d3.timeParse("%Y-%m-%d");
 
+    data1.forEach(function(d) {
+        var date = d.timestamp.split(" ");
+        d.timestamp = timeParse(date[0]);
+    });
 
-    //we only want to look at movies from the USA
-    data = data.filter(function(row) {
-        return row['country'] == 'USA';
-    })
+    data1 = data1.filter(function(d){
+        return d.timestamp > timeParse("2020-09-29");
+    });
 
-    //convert budget from string to int, and remove dollar sign
+    data1 = data1.sort(function (a, b) {return +a.timestamp - +b.timestamp});
+
+    var countObj = {};
+
+    data = data1;
+
+    console.log(data);
+    var data = data.filter(function(d) {
+        return  d.score > parseInt(d3.select("#buttonXlim").node().value);
+    });
+    console.log(data);
+
+    // count how much each city occurs in list and store in countObj
     data.forEach(function(d) {
-        d.budget = +d.budget.substring(2);
+      var date = d.timestamp;
+      if(countObj[date] === undefined) {
+          countObj[date] = 0;
+      } else {
+          countObj[date] = countObj[date] + 1;
+      }
+    });
+
+    // now store the count in each data member
+    data.forEach(function(d) {
+        var date = d.timestamp;
+        d.count = countObj[date];
     });
     
-    //only look at movies with a budget over 1 million dollars
-    data = data.filter(function(row) {
-        return  row['votes'] >= 500000 && row['budget'] != null;
-    })
+    //var maxScore = d3.max(data, function(d) { return +d.score });
+    var maxPosts = d3.max(data, function(d) { return +d.count });
 
-    data.forEach(function(d) {
-        var words = d.genre.split(", ");
+    console.log("Maxposts: "+maxPosts);
 
-        d.genre = words[0];
-    });
-    
-    var maxVotes = d3.max(data, function(d) { return +d.votes; });
-    var minVotes = d3.min(data, function(d) { return +d.votes; });
-    var maxBudget = d3.max(data, function(d) { return +d.budget; });
-    
-    // Add X axis
-    var x = d3.scaleLinear()
-      .domain([0, maxBudget])
-      .range([ 0, width]);
-    svg.append("g")
+    // Add X axis --> it is a date format
+    var x = d3.scaleTime()
+      .domain(d3.extent(data, function(d) { return d.timestamp; }))
+      .range([ 0, width ]);
+    var xAxis = svg.append("g")
       .attr("transform", "translate(0," + height + ")")
       .call(d3.axisBottom(x));
-  
+
     // Add Y axis
     var y = d3.scaleLinear()
-      .domain([0, 10])
-      .range([ height, 0]);
-    svg.append("g")
+      .domain( [0, maxPosts])
+      .range([ height, 0 ]);
+    var yAxis = svg.append("g")
       .call(d3.axisLeft(y));
 
-    // Add a scale for bubble size
-    var z = d3.scaleLinear()
-      .domain([minVotes, maxVotes])
-      .range([ 1, 40]);
+    
+    // Initialize line with group a
+    var line = svg
+      .append('g')
+      .append("path")
+        .datum(data)
+        .attr("d", d3.line()
+          .x(function(d) { return x(+d.timestamp) })
+          .y(function(d) { return y(countObj[d.timestamp]) })
+        )
+        .attr("stroke", "#69b3a2")
+        .style("stroke-width", 2)
+        .style("fill", "none")
 
-    // Add a scale for bubble color
-    var myColor = d3.scaleOrdinal()
-      .domain(["Action", "Comedy", "Mystery", "Thriller", "Biography", "Drama", "Crime", "Animation"])
-      .range(d3.schemeSet2);
+    // Initialize dots with group a
+    // var dot = svg
+    //   .selectAll('circle')
+    //   .data(data)
+    //   .enter()
+    //   .append('circle')
+    //     .attr("cx", function(d) { return x(+d.timestamp) })
+    //     .attr("cy", function(d) { return y(+countObj[d.timestamp]) })
+    //     .attr("r", 4)
+    //     .style("fill", "#69b3a2")
 
-    // -1- Create a tooltip div that is hidden by default:
-    var tooltip = d3.select("#my_dataviz")
-      .append("div")
-        .style("opacity", 0)
-        .attr("class", "tooltip")
-        .style("background-color", "black")
-        .style("border-radius", "5px")
-        .style("padding", "10px")
-        .style("color", "white")
+    // A function that update the chart
+    function update() {
+      console.log("Update function");
 
-    // -2- Create 3 functions to show / update (when mouse move but stay on same circle) / hide the tooltip
-    var showTooltip = function(d) {
-      tooltip
-        .transition()
-        .duration(200)
-      tooltip
-        .style("opacity", 1)
-        .html("Movie Title: " + d.original_title + " Genre: " + d.genre)
-        .style("left", (d3.mouse(this)[0]+30) + "px")
-        .style("top", (d3.mouse(this)[1]+30) + "px")
-    }
-    var moveTooltip = function(d) {
-      tooltip
-        .style("left", (d3.mouse(this)[0]+30) + "px")
-        .style("top", (d3.mouse(this)[1]+30) + "px")
-    }
-    var hideTooltip = function(d) {
-      tooltip
-        .transition()
-        .duration(200)
-        .style("opacity", 0)
-    }
+      var threshold = parseInt(this.value);
+
+      dataFilter = data1.filter(function(d) {
+        return  d.score > threshold;
+      });
       
-    // Add dots
-    svg.append('g')
-      .selectAll("dot")
-      .data(data)
-      .enter()
-      .append("circle")
-        .attr("class", "bubbles")
-        .attr("cx", function (d) { return x(d.budget); } )
-        .attr("cy", function (d) { return y(d.avg_vote); } )
-        .attr("r", function (d) { return z(d.votes); } )
-        .style("fill", function (d) { return myColor(d.genre); } )
-        .style("opacity", "0.7")
-        .attr("stroke", "black")
-      // -3- Trigger the functions
-      .on("mouseover", showTooltip )
-      .on("mousemove", moveTooltip )
-      .on("mouseleave", hideTooltip )
+      // define count object that holds count for each date
+      var countObj = {};
+
+      // count how much each city occurs in list and store in countObj
+      dataFilter.forEach(function(d) {
+        var date = d.timestamp;
+        if(countObj[date] === undefined) {
+            countObj[date] = 0;
+        } else {
+            countObj[date] = countObj[date] + 1;
+        }
+      });
+
+      // now store the count in each data member
+      dataFilter.forEach(function(d) {
+          var date = d.timestamp;
+          d.count = countObj[date];
+      });
+
+      var maxPosts = d3.max(dataFilter, function (d) { return +d.count;});
+
+      console.log(maxPosts);
+
+      x.domain(d3.extent(dataFilter, function(d) { return d.timestamp; }));
+      xAxis.transition().call(d3.axisBottom(x))
+
+      y.domain([0, maxPosts]);
+      yAxis.transition().call(d3.axisLeft(y))
+
+      svg.exit().remove();
+
+      // Give these new data to update line
+      line
+          .datum(dataFilter)
+          .transition()
+          .attr("d", d3.line()
+            .x(function(d) { return x(+d.timestamp) })
+            .y(function(d) { return y(+countObj[d.timestamp]) })
+          )
+      // dot
+      //   .selectAll('circle')
+      //   .datum(dataFilter)
+      //   .append('circle')
+      //     .attr("cx", function(d) { return x(+d.timestamp) })
+      //     .attr("cy", function(d) { return y(+countObj[d.timestamp]) })
+      //     .attr("r", 4)
+      //     .style("fill", "#69b3a2")
+    }
+
+    // Add an event listener to the button created in the html part
+    d3.select("#buttonXlim").on("input", update )
+    
   })
 
   
