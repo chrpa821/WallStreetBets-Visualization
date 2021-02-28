@@ -1,196 +1,64 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 
-<!-- Load d3.js -->
-<script src="https://d3js.org/d3.v4.js"></script>
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>WSB</title>
+        <link rel="stylesheet" href="libs/css/index.css" />
+        <link rel="stylesheet" href="libs/bootstrap/css/bootstrap.min.css" />
+    </head>
 
-<!-- Add a radio button -->
-<input type="number" id="buttonXlim" value=0>
+    <body class="container-fluid">
+        <div class="card text-center">
+            <div class="card-header">
+                <h2>r/WallStreetBets Activity</h2>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-sm-12 col-md-10 col-lg-10 col-xl-10">
+                        <div id="context"></div>
+                        <!--radio button -->
+                        <p>Filter By Score:</p>
+                        <input type="number" id="buttonXlim" value=0>
+                        <div id="my_dataviz"></div>
+                    </div>
+                    <div class="col-sm-12 col-md-2 col-lg-2 col-xl-2">
+                        <div class="row">
+                            <div class="col-12" id="tooltip">
+                                <br>
+                                <h5><strong>Information</strong></h5>
+                                <hr>
+                                <p><span id="posts">Max Posts Per Day: </span></p>
+                                <p><span id="score">Top Score: </span></p>
+                                <p><span id="keywords">Keywords: </span></p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12" id="color-info">
+                                <br>
+                                <h5><strong>Color Coding</strong></h5>
+                                <hr>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
 
-<!-- Load color scale -->
-<script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+    <script type=text/javascript src="libs/jquery/jquery.min.js"></script>
+    <script type=text/javascript src=libs/bootstrap/js/bootstrap.min.js></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.4.0/leaflet-src.js"></script>
+    <!-- our scripts -->
 
-<!-- Create a div where the graph will take place -->
-<div id="my_dataviz"></div>
+    <!-- Load d3.js -->
+    <script src="https://d3js.org/d3.v4.js"></script>
 
-<script type=text/javascript src=graph.js> </script>
+    <!-- Load color scale -->
+    <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
 
-<script>
+    <script type=text/javascript src=graph.js> </script>
 
-//set the dimensions and margins of the graph
-var margin = {top: 20, right: 20, bottom: 50, left: 50},
-    width = 1000 - margin.left - margin.right,
-    height = 420 - margin.top - margin.bottom;
-
-// append the svg object to the body of the page
-var svg = d3.select("#my_dataviz")
-  .append("svg")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
-  .append("g")
-    .attr("transform",
-          "translate(" + margin.left + "," + margin.top + ")");
-    
-//Read the data
-d3.csv("data/reddit_wsb.csv", function(data1){
-
-  var timeParse = d3.timeParse("%Y-%m-%d");
-
-  data1.forEach(function(d) {
-      var date = d.timestamp.split(" ");
-      d.timestamp = timeParse(date[0]);
-  });
-
-  //remove an outlier
-  data1 = data1.filter(function(d){
-      return d.timestamp > timeParse("2020-09-29");
-  });
-
-  data1 = data1.sort(function (a, b) {return +a.timestamp - +b.timestamp});
-
-  var countObj = {};
-
-  data = data1;
-
-  console.log(data);
-  var data = data.filter(function(d) {
-      return  d.score > parseInt(d3.select("#buttonXlim").node().value);
-  });
-  console.log(data);
-
-  // count how much each city occurs in list and store in countObj
-  data.forEach(function(d) {
-    var date = d.timestamp;
-    if(countObj[date] === undefined) {
-        countObj[date] = 0;
-    } else {
-        countObj[date] = countObj[date] + 1;
-    }
-  });
-
-  // now store the count in each data member
-  data.forEach(function(d) {
-      var date = d.timestamp;
-      d.count = countObj[date];
-  });
-  
-  //var maxScore = d3.max(data, function(d) { return +d.score });
-  var maxPosts = d3.max(data, function(d) { return +d.count });
-
-  console.log("Maxposts: " + maxPosts);
-
-  // Add X axis --> it is a date format
-  var x = d3.scaleTime()
-    .domain(d3.extent(data, function(d) { return d.timestamp; }))
-    .range([ 0, width ]);
-  var xAxis = svg.append("g")
-    .attr("transform", "translate(0," + height + ")")
-    .call(d3.axisBottom(x));
-
-  // Add Y axis
-  var y = d3.scaleLinear()
-    .domain( [0, maxPosts])
-    .range([ height, 0 ]);
-  var yAxis = svg.append("g")
-    .call(d3.axisLeft(y));
-
-  svg.append("text")
-      .attr("x", (width / 2))             
-      .attr("y", 0 - (margin.top / 2) + 20)
-      .attr("text-anchor", "middle")  
-      .style("font-size", "16px") 
-      .style("text-decoration", "underline")  
-      .text("Amount of Daily Posts on WallStreetBets");
-
-  // Initialize line with group a
-  var line = svg
-    .append('g')
-    .append("path")
-      .datum(data)
-      .attr("d", d3.line()
-        .x(function(d) { return x(+d.timestamp) })
-        .y(function(d) { return y(countObj[d.timestamp]) })
-      )
-      .attr("stroke", "#69b3a2")
-      .style("stroke-width", 2)
-      .style("fill", "none")
-
-  // Initialize dots with group a
-  // var dot = svg
-  //   .selectAll('circle')
-  //   .data(data)
-  //   .enter()
-  //   .append('circle')
-  //     .attr("cx", function(d) { return x(+d.timestamp) })
-  //     .attr("cy", function(d) { return y(+countObj[d.timestamp]) })
-  //     .attr("r", 4)
-  //     .style("fill", "#69b3a2")
-
-  // A function that update the chart
-  function update() {
-    console.log("Update function");
-
-    var threshold = parseInt(this.value);
-
-    dataFilter = data1.filter(function(d) {
-      return  d.score > threshold;
-    });
-    
-    // define count object that holds count for each date
-    var countObj = {};
-
-    // count how much each city occurs in list and store in countObj
-    dataFilter.forEach(function(d) {
-      var date = d.timestamp;
-      if(countObj[date] === undefined) {
-          countObj[date] = 0;
-      } else {
-          countObj[date] = countObj[date] + 1;
-      }
-    });
-
-    // now store the count in each data member
-    dataFilter.forEach(function(d) {
-        var date = d.timestamp;
-        d.count = countObj[date];
-    });
-
-    var maxPosts = d3.max(dataFilter, function (d) { return +d.count;});
-
-    console.log(maxPosts);
-
-    x.domain(d3.extent(dataFilter, function(d) { return d.timestamp; }));
-    xAxis.transition().call(d3.axisBottom(x))
-
-    y.domain([0, maxPosts]);
-    yAxis.transition().call(d3.axisLeft(y))
-
-    svg.exit().remove();
-
-    // Give these new data to update line
-    line
-        .datum(dataFilter)
-        .transition()
-        .attr("d", d3.line()
-          .x(function(d) { return x(+d.timestamp) })
-          .y(function(d) { return y(+countObj[d.timestamp]) })
-        )
-    // dot
-    //   .selectAll('circle')
-    //   .datum(dataFilter)
-    //   .append('circle')
-    //     .attr("cx", function(d) { return x(+d.timestamp) })
-    //     .attr("cy", function(d) { return y(+countObj[d.timestamp]) })
-    //     .attr("r", 4)
-    //     .style("fill", "#69b3a2")
-  }
-
-  // Add an event listener to the button created in the html part
-  d3.select("#buttonXlim").on("input", update )
-
-
-  
-})
-
-  
-  </script>
+</html>
