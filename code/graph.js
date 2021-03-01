@@ -44,14 +44,13 @@ d3.csv("data/reddit_wsb.csv", function(data1){
 
   var data = data1;
 
+  //filter by the score from the slider
   var data = data.filter(function(d) {
       return  d.score > parseInt(d3.select("#mySlider").node().value);
   });
   
   var maxScore = d3.max(data, function(d) { return +d.score });
   var maxComms = d3.max(data, function(d) { return +d.comms_num });
-
-  console.log("MaxScore: " + maxScore);
 
   //Tooltip
   var tooltip = d3.select("#tooltip");
@@ -108,7 +107,7 @@ d3.csv("data/reddit_wsb.csv", function(data1){
     .attr("clip-path", "url(#clip)")
 
   //Initialize dots with group a
-  graph
+  var dots = graph
     .selectAll("circle")
       .data(data)
       .enter()
@@ -125,9 +124,6 @@ d3.csv("data/reddit_wsb.csv", function(data1){
       .attr("class", "brush")
       .call(brush);
 
-  //Add tooltip
-  //var tooltip = d3.select("#tooltip")
-
   var dataFilter = data;
 
   // A function that update the chart
@@ -139,7 +135,7 @@ d3.csv("data/reddit_wsb.csv", function(data1){
       return  d.score > threshold;
     });
 
-    var maxScore = d3.max(dataFilter, function(d) { return +d.score });
+    maxScore = d3.max(dataFilter, function(d) { return +d.score });
     
     tooltip
         .select("#score")
@@ -149,17 +145,25 @@ d3.csv("data/reddit_wsb.csv", function(data1){
     xAxis.transition().call(d3.axisBottom(x))
 
     y.domain([0, maxScore]);
-    yAxis.transition().call(d3.axisLeft(y))
-
-    console.log(dataFilter);
+    yAxis.transition().call(d3.axisLeft(y))    
 
     // update points with new data
-    graph.selectAll("circle")
-      .data(dataFilter);
+    var updateSelection = graph.selectAll("circle")
+          .data(dataFilter);
 
-    graph.selectAll("circle")
-      .data(dataFilter)
-      .enter()
+    var enter = updateSelection.enter();
+    var exit = updateSelection.exit();
+      
+    //var exitSelection = updateSelection.exit().remove();
+
+    updateSelection
+        .attr("cx", function (d) { return x(d.timestamp); } )
+        .attr("cy", function (d) { return y(d.score); } )
+        .attr("r", function (d) { return z(d.comms_num); } )
+        .style("fill", "green")
+        .style("opacity", 0.3);
+
+    enter
         .append("circle")
           .attr("cx", function (d) { return x(d.timestamp); } )
           .attr("cy", function (d) { return y(d.score); } )
@@ -167,10 +171,15 @@ d3.csv("data/reddit_wsb.csv", function(data1){
           .style("fill", "green")
           .style("opacity", 0.3);
 
-    graph.selectAll("circle")
-      .data(dataFilter)
-      .exit()
-      .remove();
+    exit.remove();
+
+    // var enterSelection = updateSelection.enter()
+    //     .append("circle")
+    //       .attr("cx", function (d) { return x(d.timestamp); } )
+    //       .attr("cy", function (d) { return y(d.score); } )
+    //       .attr("r", function (d) { return z(d.comms_num); } )
+    //       .style("fill", "green")
+    //       .style("opacity", 0.3);
        
   }
 
@@ -195,7 +204,7 @@ d3.csv("data/reddit_wsb.csv", function(data1){
     // Update axis and line position
     xAxis.transition().duration(1000).call(d3.axisBottom(x))
 
-    graph.selectAll("circle")
+    dots
         .transition().duration(1000)
           .attr("cx", function(d) { return x(+d.timestamp) })
           .attr("cy", function(d) { return y(+d.score) })
@@ -203,9 +212,9 @@ d3.csv("data/reddit_wsb.csv", function(data1){
 
   }
 
-  // Listen to the slider?
-d3.select("#mySlider").on("change", function(d){
-  selectedValue = this.value
-  updateScore(selectedValue)
-})
+  // Slider
+  d3.select("#mySlider").on("change", function(d){
+    var selectedValue = this.value;
+    updateScore(selectedValue);
+  })
 })
