@@ -148,22 +148,22 @@ d3.csv("data/reddit_wsb.csv", function(data1){
     yAxis.transition().call(d3.axisLeft(y))    
 
     // update points with new data
-    var updateSelection = graph.selectAll("circle")
+    dots = graph.selectAll("circle")
           .data(dataFilter);
 
-    var enter = updateSelection.enter();
-    var exit = updateSelection.exit();
+    // var enter = updateSelection.enter();
+    // var exit = updateSelection.exit();
       
     //var exitSelection = updateSelection.exit().remove();
 
-    updateSelection
+    dots
         .attr("cx", function (d) { return x(d.timestamp); } )
         .attr("cy", function (d) { return y(d.score); } )
         .attr("r", function (d) { return z(d.comms_num); } )
         .style("fill", "green")
         .style("opacity", 0.3);
 
-    enter
+    dots.enter()
         .append("circle")
           .attr("cx", function (d) { return x(d.timestamp); } )
           .attr("cy", function (d) { return y(d.score); } )
@@ -171,7 +171,7 @@ d3.csv("data/reddit_wsb.csv", function(data1){
           .style("fill", "green")
           .style("opacity", 0.3);
 
-    exit.remove();
+    dots.exit().remove();
 
     // var enterSelection = updateSelection.enter()
     //     .append("circle")
@@ -204,7 +204,7 @@ d3.csv("data/reddit_wsb.csv", function(data1){
     // Update axis and line position
     xAxis.transition().duration(1000).call(d3.axisBottom(x))
 
-    dots
+    graph.selectAll("circle")
         .transition().duration(1000)
           .attr("cx", function(d) { return x(+d.timestamp) })
           .attr("cy", function(d) { return y(+d.score) })
