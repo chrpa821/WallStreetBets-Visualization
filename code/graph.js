@@ -45,7 +45,7 @@ d3.csv("data/reddit_wsb.csv", function(data1){
   var data = data1;
 
   var data = data.filter(function(d) {
-      return  d.score > parseInt(d3.select("#buttonXlim").node().value);
+      return  d.score > parseInt(d3.select("#mySlider").node().value);
   });
   
   var maxScore = d3.max(data, function(d) { return +d.score });
@@ -131,9 +131,9 @@ d3.csv("data/reddit_wsb.csv", function(data1){
   var dataFilter = data;
 
   // A function that update the chart
-  function updateScore() {
+  function updateScore(selectedValue) {
 
-    var threshold = parseInt(this.value);
+    var threshold = parseInt(selectedValue);
 
     dataFilter = data1.filter(function(d) {
       return  d.score > threshold;
@@ -151,16 +151,27 @@ d3.csv("data/reddit_wsb.csv", function(data1){
     y.domain([0, maxScore]);
     yAxis.transition().call(d3.axisLeft(y))
 
-    // update points with ne data
+    console.log(dataFilter);
+
+    // update points with new data
+    graph.selectAll("circle")
+      .data(dataFilter);
+
     graph.selectAll("circle")
       .data(dataFilter)
       .enter()
-      .append("circle")
-        .attr("cx", function (d) { return x(d.timestamp); } )
-        .attr("cy", function (d) { return y(d.score); } )
-        .attr("r", function (d) { return z(d.comms_num); } )
-        .style("fill", "green")
-        .style("opacity", 0.3)
+        .append("circle")
+          .attr("cx", function (d) { return x(d.timestamp); } )
+          .attr("cy", function (d) { return y(d.score); } )
+          .attr("r", function (d) { return z(d.comms_num); } )
+          .style("fill", "green")
+          .style("opacity", 0.3);
+
+    graph.selectAll("circle")
+      .data(dataFilter)
+      .exit()
+      .remove();
+       
   }
 
   // A function that set idleTimeOut to null
@@ -188,10 +199,13 @@ d3.csv("data/reddit_wsb.csv", function(data1){
         .transition().duration(1000)
           .attr("cx", function(d) { return x(+d.timestamp) })
           .attr("cy", function(d) { return y(+d.score) })
-          .attr("r", function (d) { return z(d.comms_num); } )
+          .attr("r", function (d) { return z(+d.comms_num); } )
 
   }
 
-  // Add an event listener to the button created in the html part
-  d3.select("#buttonXlim").on("input", updateScore );
+  // Listen to the slider?
+d3.select("#mySlider").on("change", function(d){
+  selectedValue = this.value
+  updateScore(selectedValue)
+})
 })
