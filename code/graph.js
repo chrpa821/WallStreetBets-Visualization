@@ -1,10 +1,21 @@
+//TODO: radius on circles, color coding?, list of top posts, keywords, links to posts, hover for info on circles, fix css, fix filter by score
+
 //set the dimensions and margins of the graph
 var margin = {top: 20, right: 20, bottom: 50, left: 50},
     width = 1000 - margin.left - margin.right,
     height = 420 - margin.top - margin.bottom;
 
 // append the svg object to the body of the page
-var svg = d3.select("#my_dataviz")
+// var svg = d3.select("#my_dataviz")
+//   .append("svg")
+//     .attr("width", width + margin.left + margin.right)
+//     .attr("height", height + margin.top + margin.bottom)
+//   .append("g")
+//     .attr("transform",
+//           "translate(" + margin.left + "," + margin.top + ")");
+
+// append the svg object to the body of the page
+var svg = d3.select("#points")
   .append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
@@ -15,55 +26,34 @@ var svg = d3.select("#my_dataviz")
 //Read the data
 d3.csv("data/reddit_wsb.csv", function(data1){
 
-  var timeParse = d3.timeParse("%Y-%m-%d");
+  //var timeParse = d3.timeParse("%Y-%m-%d");
+  var time = d3.timeParse("%Y-%m-%d %H:%M:%S");
 
   data1.forEach(function(d) {
-      var date = d.timestamp.split(" ");
-      d.timestamp = timeParse(date[0]);
+    var date = d.timestamp;
+    d.timestamp = time(date);
   });
+
+  //sort by score
+  data1 = data1.sort(function (a, b) {return +a.score - +b.score});
 
   //remove an outlier
   data1 = data1.filter(function(d){
-      return d.timestamp > timeParse("2020-09-29");
+      return d.timestamp > time("2020-09-30 00:00:00");
   });
 
-  data1 = data1.sort(function (a, b) {return +a.timestamp - +b.timestamp});
-
-  var countObj = {};
-
-  data = data1;
+  var data = data1;
 
   var data = data.filter(function(d) {
       return  d.score > parseInt(d3.select("#buttonXlim").node().value);
   });
-
-  // count how much each city occurs in list and store in countObj
-  data.forEach(function(d) {
-    var date = d.timestamp;
-    if(countObj[date] === undefined) {
-        countObj[date] = 0;
-    } else {
-        countObj[date] = countObj[date] + 1;
-    }
-  });
-
-  // now store the count in each data member
-  data.forEach(function(d) {
-      var date = d.timestamp;
-      d.count = countObj[date];
-  });
   
   var maxScore = d3.max(data, function(d) { return +d.score });
-  var maxPosts = d3.max(data, function(d) { return +d.count });
 
-  console.log("Maxposts: " + maxPosts);
+  console.log("MaxScore: " + maxScore);
 
   //Tooltip
   var tooltip = d3.select("#tooltip");
-
-  tooltip
-    .select("#posts")
-    .text("Max Posts Per day: " + maxPosts)
 
   tooltip
     .select("#score")
@@ -79,7 +69,7 @@ d3.csv("data/reddit_wsb.csv", function(data1){
 
   // Add Y axis
   var y = d3.scaleLinear()
-    .domain( [0, maxPosts])
+    .domain( [0, maxScore])
     .range([ height, 0 ]);
   var yAxis = svg.append("g")
     .call(d3.axisLeft(y));
@@ -111,19 +101,17 @@ d3.csv("data/reddit_wsb.csv", function(data1){
   var graph = svg.append('g')
     .attr("clip-path", "url(#clip)")
 
-  // Initialize line with group a
+  //Initialize dots with group a
   graph
-    .append('g')
-    .append("path")
-    .attr("class", "chart")
-      .datum(data)
-      .attr("d", d3.line()
-        .x(function(d) { return x(+d.timestamp) })
-        .y(function(d) { return y(countObj[d.timestamp]) })
-      )
-      .attr("stroke", "#69b3a2")
-      .style("stroke-width", 2)
-      .style("fill", "none")
+    .selectAll("circle")
+      .data(data)
+      .enter()
+      .append("circle")
+        .attr("cx", function (d) { return x(d.timestamp); } )
+        .attr("cy", function (d) { return y(d.score); } )
+        .attr("r", 8)
+        .style("fill", "green" )
+        .style("opacity", 0.3)
 
   // Add the brushing
   graph
@@ -131,64 +119,21 @@ d3.csv("data/reddit_wsb.csv", function(data1){
       .attr("class", "brush")
       .call(brush);
 
-
-
-
-  //Initialize dots with group a
-  //   var dot = svg
-  //     .selectAll('circle')
-  //     .data(data)
-  //     .enter()
-  //     .append('circle')
-  //       .attr("cx", function(d) { return x(+d.timestamp) })
-  //       .attr("cy", function(d) { return y(+countObj[d.timestamp]) })
-  //       .attr("r", 4)
-  //       .style("fill", "#69b3a2")
-
   //Add tooltip
-
   //var tooltip = d3.select("#tooltip")
-
-
-
-  
 
   var dataFilter = data;
 
   // A function that update the chart
-  function update() {
+  function updateScore() {
 
     var threshold = parseInt(this.value);
 
     dataFilter = data1.filter(function(d) {
       return  d.score > threshold;
     });
-    
-    // define count object that holds count for each date
-    var countObj = {};
-
-    // count how much each city occurs in list and store in countObj
-    dataFilter.forEach(function(d) {
-      var date = d.timestamp;
-      if(countObj[date] === undefined) {
-          countObj[date] = 0;
-      } else {
-          countObj[date] = countObj[date] + 1;
-      }
-    });
-
-    // now store the count in each data member
-    dataFilter.forEach(function(d) {
-        var date = d.timestamp;
-        d.count = countObj[date];
-    });
 
     var maxScore = d3.max(dataFilter, function(d) { return +d.score });
-    var maxPosts = d3.max(dataFilter, function (d) { return +d.count;});
-
-    tooltip
-        .select("#posts")
-        .text("Max Posts Per Day: " + maxPosts)
     
     tooltip
         .select("#score")
@@ -197,25 +142,19 @@ d3.csv("data/reddit_wsb.csv", function(data1){
     x.domain(d3.extent(dataFilter, function(d) { return d.timestamp; }));
     xAxis.transition().call(d3.axisBottom(x))
 
-    y.domain([0, maxPosts]);
+    y.domain([0, maxScore]);
     yAxis.transition().call(d3.axisLeft(y))
 
-    // Give these new data to update line
-    graph.select("path.chart")
-        .datum(dataFilter)
-        .attr("d", d3.line()
-          .x(function(d) { return x(+d.timestamp) })
-          .y(function(d) { return y(+countObj[d.timestamp]) })
-        )
-
-    // dot.selectAll('circle')
-    //     .data(dataFilter)
-    //     .enter()
-    //     .append('circle')
-    //         .attr("cx", function(d) { return x(+d.timestamp) })
-    //         .attr("cy", function(d) { return y(+countObj[d.timestamp]) })
-
-
+    // update points with ne data
+    graph.selectAll("circle")
+      .data(dataFilter)
+      .enter()
+      .append("circle")
+        .attr("cx", function (d) { return x(d.timestamp); } )
+        .attr("cy", function (d) { return y(d.score); } )
+        .attr("r", 8)
+        .style("fill", "green")
+        .style("opacity", 0.3)
   }
 
   // A function that set idleTimeOut to null
@@ -239,16 +178,12 @@ d3.csv("data/reddit_wsb.csv", function(data1){
     // Update axis and line position
     xAxis.transition().duration(1000).call(d3.axisBottom(x))
 
-    graph.select(".chart")
-        .datum(dataFilter)
+    graph.selectAll("circle")
         .transition().duration(1000)
-        .attr("d", d3.line()
-          .x(function(d) { return x(+d.timestamp) })
-          .y(function(d) { return y(+countObj[d.timestamp]) })
-        )
-      
+          .attr("cx", function(d) { return x(+d.timestamp) })
+          .attr("cy", function(d) { return y(+d.score) })
   }
 
   // Add an event listener to the button created in the html part
-  d3.select("#buttonXlim").on("input", update );
+  d3.select("#buttonXlim").on("input", updateScore );
 })
