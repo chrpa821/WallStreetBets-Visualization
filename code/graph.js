@@ -1,4 +1,4 @@
-//TODO: radius on circles, color coding?, list of top posts, keywords, links to posts, hover for info on circles, fix css, fix filter by score
+//TODO: radius legend, color coding?, list of top posts, keywords, links to posts, hover for info on circles, fix css, fix filter by score
 
 //set the dimensions and margins of the graph
 var margin = {top: 20, right: 20, bottom: 50, left: 50},
@@ -49,6 +49,7 @@ d3.csv("data/reddit_wsb.csv", function(data1){
   });
   
   var maxScore = d3.max(data, function(d) { return +d.score });
+  var maxComms = d3.max(data, function(d) { return +d.comms_num });
 
   console.log("MaxScore: " + maxScore);
 
@@ -73,6 +74,11 @@ d3.csv("data/reddit_wsb.csv", function(data1){
     .range([ height, 0 ]);
   var yAxis = svg.append("g")
     .call(d3.axisLeft(y));
+
+  // Add a scale for bubble size
+  var z = d3.scaleLinear()
+    .domain([0, maxComms])
+    .range([ 2, 40]);
 
   // Add a clipPath: everything out of this area won't be drawn.
   var clip = svg.append("defs").append("svg:clipPath")
@@ -109,7 +115,7 @@ d3.csv("data/reddit_wsb.csv", function(data1){
       .append("circle")
         .attr("cx", function (d) { return x(d.timestamp); } )
         .attr("cy", function (d) { return y(d.score); } )
-        .attr("r", 8)
+        .attr("r", function (d) { return z(d.comms_num); } )
         .style("fill", "green" )
         .style("opacity", 0.3)
 
@@ -152,7 +158,7 @@ d3.csv("data/reddit_wsb.csv", function(data1){
       .append("circle")
         .attr("cx", function (d) { return x(d.timestamp); } )
         .attr("cy", function (d) { return y(d.score); } )
-        .attr("r", 8)
+        .attr("r", function (d) { return z(d.comms_num); } )
         .style("fill", "green")
         .style("opacity", 0.3)
   }
@@ -182,6 +188,8 @@ d3.csv("data/reddit_wsb.csv", function(data1){
         .transition().duration(1000)
           .attr("cx", function(d) { return x(+d.timestamp) })
           .attr("cy", function(d) { return y(+d.score) })
+          .attr("r", function (d) { return z(d.comms_num); } )
+
   }
 
   // Add an event listener to the button created in the html part
