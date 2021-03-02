@@ -1,20 +1,14 @@
-//TODO: radius legend, color coding?, list of top posts, keywords, links to posts, hover for info on circles, fix css, fix filter by score
+//TODO: radius legend, color coding?, list of top posts, keywords, links to posts, hover for info on circles, fix css, add date offset in xaxis
+// recalculate y axis domain after zooming in
+
+//If time: stock correlation/causation
 
 //set the dimensions and margins of the graph
-var margin = {top: 20, right: 20, bottom: 50, left: 50},
+var margin = {top: 20, right: 20, bottom: 50, left: 80},
     width = 1000 - margin.left - margin.right,
-    height = 420 - margin.top - margin.bottom;
+    height = 600 - margin.top - margin.bottom;
 
-// append the svg object to the body of the page
-// var svg = d3.select("#my_dataviz")
-//   .append("svg")
-//     .attr("width", width + margin.left + margin.right)
-//     .attr("height", height + margin.top + margin.bottom)
-//   .append("g")
-//     .attr("transform",
-//           "translate(" + margin.left + "," + margin.top + ")");
-
-// append the svg object to the body of the page
+// append the svg object to the points div of the page
 var svg = d3.select("#points")
   .append("svg")
     .attr("width", width + margin.left + margin.right)
@@ -22,11 +16,17 @@ var svg = d3.select("#points")
   .append("g")
     .attr("transform",
           "translate(" + margin.left + "," + margin.top + ")");
-    
+
+svg.append("rect")
+  .attr("width", width)
+  .attr("height", height)
+  .attr("fill", "black")
+  .style("opacity", 0.05)
+
+
 //Read the data
 d3.csv("data/reddit_wsb.csv", function(data1){
 
-  //var timeParse = d3.timeParse("%Y-%m-%d");
   var time = d3.timeParse("%Y-%m-%d %H:%M:%S");
 
   data1.forEach(function(d) {
@@ -59,6 +59,56 @@ d3.csv("data/reddit_wsb.csv", function(data1){
     .select("#score")
     .text("Top Score: " + maxScore)
 
+  var legend = d3.select("#color-info").append("svg")
+
+  //LEGEND
+  // The scale you use for bubble size
+  var size = d3.scaleSqrt()
+    .domain([1, maxComms])  // What's in the data, let's say it is percentage
+    .range([2, 40])  // Size in pixel
+
+  // Add legend: circles
+  var valuesToShow = [1, 10000, 80000]
+  var xCircle = 230
+  var xLabel = 280
+  var yCircle = 230
+
+  legend
+    .selectAll("legend")
+    .data(valuesToShow)
+    .enter()
+    .append("circle")
+      .attr("cx", xCircle)
+      .attr("cy", function(d){ return yCircle - size(d) } )
+      .attr("r", function(d){ return size(d) })
+      .style("fill", "none")
+      .attr("stroke", "green")
+
+  // Add legend: segments
+  legend
+  .selectAll("legend")
+  .data(valuesToShow)
+  .enter()
+  .append("line")
+    .attr('x1', function(d){ return xCircle + size(d) } )
+    .attr('x2', xLabel)
+    .attr('y1', function(d){ return yCircle - size(d) } )
+    .attr('y2', function(d){ return yCircle - size(d) } )
+    .attr('stroke', 'black')
+    .style('stroke-dasharray', ('2,2'))
+  
+  // Add legend: labels
+  legend
+    .selectAll("legend")
+    .data(valuesToShow)
+    .enter()
+    .append("text")
+      .attr('x', xLabel)
+      .attr('y', function(d){ return yCircle - size(d) } )
+      .text( function(d){ return d } )
+      .style("font-size", 10)
+      .attr('alignment-baseline', 'middle')
+
   // Add X axis --> it is a date format
   var x = d3.scaleTime()
     .domain(d3.extent(data, function(d) { return d.timestamp; }))
@@ -67,16 +117,33 @@ d3.csv("data/reddit_wsb.csv", function(data1){
     .attr("transform", "translate(0," + height + ")")
     .call(d3.axisBottom(x));
 
+  // text label for the X axis
+  svg.append("text")             
+      .attr("transform",
+            "translate(" + (width/2) + " ," + 
+                           (height + margin.top + 20) + ")")
+      .style("text-anchor", "middle")
+      .text("Date");
+
   // Add Y axis
   var y = d3.scaleLinear()
-    .domain( [0, maxScore])
+    .domain( [-1000, maxScore])
     .range([ height, 0 ]);
   var yAxis = svg.append("g")
     .call(d3.axisLeft(y));
 
+  // text label for the y axis
+  svg.append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 0 - margin.left )
+      .attr("x",0 - (height / 2))
+      .attr("dy", "1em")
+      .style("text-anchor", "middle")
+      .text("Upvotes"); 
+
   // Add a scale for bubble size
   var z = d3.scaleLinear()
-    .domain([0, maxComms])
+    .domain([1, maxComms])
     .range([ 2, 40]);
 
   // Add a clipPath: everything out of this area won't be drawn.
@@ -92,15 +159,6 @@ d3.csv("data/reddit_wsb.csv", function(data1){
   var brush = d3.brushX()                 // Add the brush feature using the d3.brush function
     .extent( [ [0,0], [width,height] ] ) // initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area
     .on("end", updateChart) // Each time the brush selection changes, trigger the 'updateChart' function
-
-  // //Header
-  // svg.append("text")
-  //     .attr("x", (width / 2))             
-  //     .attr("y", 0 - (margin.top / 2) + 20)
-  //     .attr("text-anchor", "middle")  
-  //     .style("font-size", "16px") 
-  //     .style("text-decoration", "underline")  
-  //     .text("Amount of Daily Posts on WallStreetBets");
 
   // Create the scatter variable: where both the circles and the brush take place
   var graph = svg.append('g')
@@ -144,7 +202,7 @@ d3.csv("data/reddit_wsb.csv", function(data1){
     x.domain(d3.extent(dataFilter, function(d) { return d.timestamp; }));
     xAxis.transition().call(d3.axisBottom(x))
 
-    y.domain([0, maxScore]);
+    y.domain([-1000, maxScore]);
     yAxis.transition().call(d3.axisLeft(y))    
 
     // update points with new data
@@ -172,14 +230,6 @@ d3.csv("data/reddit_wsb.csv", function(data1){
           .style("opacity", 0.3);
 
     dots.exit().remove();
-
-    // var enterSelection = updateSelection.enter()
-    //     .append("circle")
-    //       .attr("cx", function (d) { return x(d.timestamp); } )
-    //       .attr("cy", function (d) { return y(d.score); } )
-    //       .attr("r", function (d) { return z(d.comms_num); } )
-    //       .style("fill", "green")
-    //       .style("opacity", 0.3);
        
   }
 
@@ -209,7 +259,6 @@ d3.csv("data/reddit_wsb.csv", function(data1){
           .attr("cx", function(d) { return x(+d.timestamp) })
           .attr("cy", function(d) { return y(+d.score) })
           .attr("r", function (d) { return z(+d.comms_num); } )
-
   }
 
   // Slider

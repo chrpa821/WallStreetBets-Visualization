@@ -6,7 +6,9 @@
     Css file
  *
 */
-
+.points{
+  background-color: beige;
+}
 .zoom {
   cursor: move;
   fill: none;
