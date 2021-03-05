@@ -4,16 +4,16 @@
 //If time: stock correlation/causation
 
 //set the dimensions and margins of the graph
-var margin = {top: 20, right: 20, bottom: 50, left: 80},
+var margin = {top: 20, right: 20, bottom: 50, left: 70},
     width = 1000 - margin.left - margin.right,
     height = 600 - margin.top - margin.bottom;
 
 // append the svg object to the points div of the page
 var svg = d3.select("#points")
-  // .style("background-color", "#061f08")
   .append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
+    .attr("class", "graph-svg-component")
   .append("g")
     .attr("transform",
           "translate(" + margin.left + "," + margin.top + ")")
@@ -179,13 +179,13 @@ d3.csv("data/reddit_wsb.csv", function(data1){
     tooltip
       .style("opacity", 1)
       .html(d.title)
-      .style("left", (d3.mouse(this)[0]+30) + "px")
-      .style("top", (d3.mouse(this)[1]+30) + "px")
+      .style("left", (d3.mouse(this)[0]) + "px")
+      .style("top", (d3.mouse(this)[1]) + "px")
   }
   var moveTooltip = function(d) {
     tooltip
-      .style("left", (d3.mouse(this)[0]+30) + "px")
-      .style("top", (d3.mouse(this)[1]+30) + "px")
+      .style("left", (d3.mouse(this)[0]) + "px")
+      .style("top", (d3.mouse(this)[1]) + "px")
   }
   var hideTooltip = function(d) {
     tooltip
@@ -198,6 +198,8 @@ d3.csv("data/reddit_wsb.csv", function(data1){
 
 
   }
+
+  // Add brushing
 
   // Add the brushing
   graph
@@ -279,7 +281,7 @@ d3.csv("data/reddit_wsb.csv", function(data1){
 
     var extent = d3.event.selection;
 
-    // If no selection, back to initial coordinate. Otherwise, update X axis domain
+    // If no selection, back to initial coordinate. Otherwise, update X axis domain 
     if(!extent){
       if (!idleTimeout) return idleTimeout = setTimeout(idled, 350); // This allows to wait a little bit
       x.domain(d3.extent(dataFilter, function(d) { return d.timestamp; }))
@@ -291,17 +293,41 @@ d3.csv("data/reddit_wsb.csv", function(data1){
     // Update axis and line position
     xAxis.transition().duration(1000).call(d3.axisBottom(x));
 
-    graph.selectAll("circle")
+    dots = graph.selectAll("circle")
         .transition().duration(1000)
           .attr("cx", function(d) { return x(+d.timestamp) })
           .attr("cy", function(d) { return y(+d.score) })
           .attr("r", function (d) { return z(+d.comms_num); } )
   }
 
-  // Slider
+  // Function that is triggered when brushing is performed
+  function updateSelection() {
+    var extent = d3.event.selection
+    graph.selectAll("circle").classed("selected", function(d){ return isBrushed(extent, x(+d.timestamp), y(+d.score)) } )
+  }
+
+  // A function that return TRUE or FALSE according if a dot is in the selection or not
+  function isBrushed(brush_coords, cx, cy) {
+    var x0 = brush_coords[0][0],
+        x1 = brush_coords[1][0],
+        y0 = brush_coords[0][1],
+        y1 = brush_coords[1][1];
+   return x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1;    // This return TRUE or FALSE depending on if the points is in the selected area
+  }
+
+  // Slider for filter by upvotes
   d3.select("#mySlider").on("change", function(d){
     var selectedValue = this.value;
     updateScore(selectedValue);
   })
 
+  //detect change in brush type
+  var brushSelected;
+  $(document).ready(function(){
+    $('#form').change(function(){
+      brushSelected = $('input[type=radio][name="brushSelector"]:checked').val();
+
+      console.log(brushSelected);
+    });
+});
 })

@@ -6,7 +6,8 @@
     Css file
  *
 */
-
+.graph-svg-component {
+}
 #tooltip, #color-info{
         height: 270px;
         background-color: white;
@@ -18,6 +19,11 @@
         box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
         pointer-events: none;
         opacity: 0.8;
+}
+.selected {
+  opacity: 1 !important;
+  stroke: black;
+  stroke-width: 1px;
 }
 #tooltip p {
     margin: 0;
