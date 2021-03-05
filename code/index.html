@@ -5,7 +5,7 @@
 <html lang="en">
     <head>
         <meta charset="utf-8">
-        <title>WSB</title>
+        <title>Posts on r/WallStreetBets</title>
         <link rel="stylesheet" href="libs/css/index.css" />
         <link rel="stylesheet" href="libs/bootstrap/css/bootstrap.min.css" />
     </head>
@@ -18,17 +18,31 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col-sm-12 col-md-10 col-lg-10 col-xl-10">
-                        <div id="context"></div>
+                        <div id="container" class="d-flex justify-content-around align-items-center">
+                            <div id="tools">
+                                <div id="form" class="btn-group btn-group-toggle" data-toggle="buttons">
+                                    <label class="btn btn-secondary active">
+                                        <input type="radio" name="dateSelector" value="DATE" checked>Date Selector<br>
+                                    </label>
+                                    <label class="btn btn-secondary">
+                                        <input type="radio" name="areaSelector" value="AREA">Area Selector<br>
+                                    </label>
+                                </div>
+                            </div>
+                            <div id="slider">
+                                <p>Filter By Upvotes</p>
+                                <input autocomplete="off" type="range" name="mySlider" id=mySlider min="1" max="150000" value="10000">
+                            </div>
+                        </div>
                         <!--slider -->
-                        <p>Filter By Upvotes:</p>
-                        <input autocomplete="off" type="range" name="mySlider" id=mySlider min="1" max="150000" value="10000">
+                        
                         <div id="points"></div>
                     </div>
                     <div class="col-sm-12 col-md-2 col-lg-2 col-xl-2">
                         <div class="row">
                             <div class="col-12" id="tooltip">
                                 <br>
-                                <h5><strong>Information</strong></h5>
+                                <h5><strong>Selected Post</strong></h5>
                                 <hr>
                                 <p><span id="score">Top Score: </span></p>
                                 <p><span id="keywords">Keywords: </span></p>
@@ -40,17 +54,16 @@
         </div>
     </body>
 
+    <script type=text/javascript src="libs/jquery/jquery.min.js"></script>
     <script type=text/javascript src=libs/bootstrap/js/bootstrap.min.js></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.4.0/leaflet-src.js"></script>
-    <!-- our scripts -->
 
     <!-- Load d3.js -->
     <script src="https://d3js.org/d3.v4.js"></script>
 
     <!-- Load color scale -->
-    <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+
     
-    <script type=text/javascript src=tooltips.js> </script>
     <script type=text/javascript src=graph.js> </script>
 
 
