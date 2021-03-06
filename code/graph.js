@@ -198,12 +198,6 @@ d3.csv("data/reddit_wsb.csv", function(data1){
 
   }
 
-
-  //return a string with selected brush
-  //var brushSelected = $('input[type=radio][name="brushSelector"]:checked').val();
-
-    //changeBrush();
-
   var areaBrush = d3.brush()            // Add the brush feature using the d3.brush function
     .extent( [ [0,0], [width,height] ] ) // initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area
     .on("start brush", updateSelection)  // Each time the brush selection changes, trigger the 'updateSelection' function
@@ -214,7 +208,7 @@ d3.csv("data/reddit_wsb.csv", function(data1){
     .on("end", updateDate)  // Each time the brush selection changes, trigger the 'updateSelection' function
 
   
-    graph
+  graph
     .append("g")
       .attr("class", "brush")
       .call(dateBrush)
@@ -343,19 +337,19 @@ d3.csv("data/reddit_wsb.csv", function(data1){
 
     if(brushSelected == "AREA"){
       console.log("area brush");
-      svg.selectAll(".brush").remove();
-      svg
+      graph.selectAll(".brush").remove();
+      graph.append("g")
+        .attr("class", "brush")
         .call(areaBrush)
     }
     else if (brushSelected == "DATE"){
       console.log("date brush");
 
-      svg.selectAll(".brush").remove();
+      graph.selectAll(".brush").remove();
 
-      svg
+      graph.append("g")
+        .attr("class", "brush")
         .call(dateBrush)
-        .selectAll('rect')
-        .attr('height', height);
     }
   }
 
@@ -365,11 +359,15 @@ d3.csv("data/reddit_wsb.csv", function(data1){
     updateScore(selectedValue);
   })
 
+
+  //return a string with selected brush
+  var brushSelected = $('input[type=radio][name="brushSelector"]:checked').val();
+
   //detect change in brush type
   $(document).ready(function(){
     $('#form').change(function(){
-      //brushSelected = $('input[type=radio][name="brushSelector"]:checked').val();
-      //changeBrush();
+      brushSelected = $('input[type=radio][name="brushSelector"]:checked').val();
+      changeBrush();
     });
 });
 })
