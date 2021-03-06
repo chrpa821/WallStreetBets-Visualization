@@ -144,6 +144,11 @@ d3.csv("data/reddit_wsb.csv", function(data1){
     .domain([1, maxComms])
     .range([ 2, 40]);
 
+  
+    // var dateBrush = d3.brushX()                // Add the brush feature using the d3.brush function
+    // .extent( [ [0,0], [width,height] ] ) // initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area
+    // .on("end", updateDate) // Each time the brush selection changes, trigger the 'updateDate' function
+
   // Add a clipPath: everything out of this area won't be drawn.
   var clip = svg.append("defs").append("svg:clipPath")
     .attr("id", "clip")
@@ -152,11 +157,6 @@ d3.csv("data/reddit_wsb.csv", function(data1){
     .attr("height", height )
     .attr("x", 0)
     .attr("y", 0);
-
-  // Add brushing
-  var brush = d3.brushX()                // Add the brush feature using the d3.brush function
-    .extent( [ [0,0], [width,height] ] ) // initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area
-    .on("end", updateChart) // Each time the brush selection changes, trigger the 'updateChart' function
 
   // Create the scatter variable: where both the circles and the brush take place
   var graph = svg.append('g')
@@ -196,18 +196,30 @@ d3.csv("data/reddit_wsb.csv", function(data1){
   var clickPost = function(d) {
     console.log("clicked");
 
-
   }
 
-  // Add brushing
 
-  // Add the brushing
-  graph
+  //return a string with selected brush
+  //var brushSelected = $('input[type=radio][name="brushSelector"]:checked').val();
+
+    //changeBrush();
+
+  var areaBrush = d3.brush()            // Add the brush feature using the d3.brush function
+    .extent( [ [0,0], [width,height] ] ) // initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area
+    .on("start brush", updateSelection)  // Each time the brush selection changes, trigger the 'updateSelection' function
+
+
+  var dateBrush = d3.brushX()            // Add the brush feature using the d3.brush function
+    .extent( [ [0,0], [width,height] ] ) // initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area
+    .on("end", updateDate)  // Each time the brush selection changes, trigger the 'updateSelection' function
+
+  
+    graph
     .append("g")
       .attr("class", "brush")
-      .call(brush)
-    .selectAll('rect')
-      .attr('height', height);
+      .call(dateBrush)
+  // .selectAll('rect')
+  //   .attr('height', height);
 
   //Initialize dots with group a
   var dots = graph
@@ -224,6 +236,9 @@ d3.csv("data/reddit_wsb.csv", function(data1){
       .on("mousemove", moveTooltip )
       .on("mouseleave", hideTooltip )
       .on("click", clickPost);
+
+  // Add the brushing
+  //graph.call(areaBrush);
       
   var dataFilter = data;
 
@@ -269,7 +284,7 @@ d3.csv("data/reddit_wsb.csv", function(data1){
           .on("mouseleave", hideTooltip )
     
     dots.exit().remove();
-       
+
   }
 
   // A function that set idleTimeOut to null
@@ -277,7 +292,8 @@ d3.csv("data/reddit_wsb.csv", function(data1){
   function idled() { idleTimeout = null; }
 
   // // A function that update the chart for given boundaries
-  function updateChart() {
+  function updateDate() {
+    console.log("updateDate")
 
     var extent = d3.event.selection;
 
@@ -287,7 +303,7 @@ d3.csv("data/reddit_wsb.csv", function(data1){
       x.domain(d3.extent(dataFilter, function(d) { return d.timestamp; }))
     }else{
       x.domain([ x.invert(extent[0]), x.invert(extent[1]) ])
-      graph.select(".brush").call(brush.move, null) // This remove the grey brush area as soon as the selection has been done
+      graph.select(".brush").call(dateBrush.move, null) // This remove the grey brush area as soon as the selection has been done
     }
 
     // Update axis and line position
@@ -302,17 +318,45 @@ d3.csv("data/reddit_wsb.csv", function(data1){
 
   // Function that is triggered when brushing is performed
   function updateSelection() {
-    var extent = d3.event.selection
-    graph.selectAll("circle").classed("selected", function(d){ return isBrushed(extent, x(+d.timestamp), y(+d.score)) } )
+    console.log("updateSelection");
+
+    var extent = d3.event.selection;
+
+    svg.selectAll("circle").classed("selected", function(d){ return isBrushed(extent, x(+d.timestamp), y(+d.score)) } )
   }
 
   // A function that return TRUE or FALSE according if a dot is in the selection or not
   function isBrushed(brush_coords, cx, cy) {
+
     var x0 = brush_coords[0][0],
         x1 = brush_coords[1][0],
         y0 = brush_coords[0][1],
         y1 = brush_coords[1][1];
+
    return x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1;    // This return TRUE or FALSE depending on if the points is in the selected area
+  }
+
+
+  function changeBrush(){
+
+    console.log(brushSelected);
+
+    if(brushSelected == "AREA"){
+      console.log("area brush");
+      svg.selectAll(".brush").remove();
+      svg
+        .call(areaBrush)
+    }
+    else if (brushSelected == "DATE"){
+      console.log("date brush");
+
+      svg.selectAll(".brush").remove();
+
+      svg
+        .call(dateBrush)
+        .selectAll('rect')
+        .attr('height', height);
+    }
   }
 
   // Slider for filter by upvotes
@@ -322,12 +366,10 @@ d3.csv("data/reddit_wsb.csv", function(data1){
   })
 
   //detect change in brush type
-  var brushSelected;
   $(document).ready(function(){
     $('#form').change(function(){
-      brushSelected = $('input[type=radio][name="brushSelector"]:checked').val();
-
-      console.log(brushSelected);
+      //brushSelected = $('input[type=radio][name="brushSelector"]:checked').val();
+      //changeBrush();
     });
 });
 })
