@@ -150,7 +150,7 @@ d3.csv("data/reddit_wsb.csv", function(data1){
     // .on("end", updateDate) // Each time the brush selection changes, trigger the 'updateDate' function
 
   // Add a clipPath: everything out of this area won't be drawn.
-  var clip = svg.append("defs").append("svg:clipPath")
+  svg.append("defs").append("svg:clipPath")
     .attr("id", "clip")
     .append("svg:rect")
     .attr("width", width )
@@ -338,18 +338,52 @@ d3.csv("data/reddit_wsb.csv", function(data1){
     if(brushSelected == "AREA"){
       console.log("area brush");
       graph.selectAll(".brush").remove();
+      graph.selectAll("circle").remove();
+
       graph.append("g")
         .attr("class", "brush")
         .call(areaBrush)
+        
+      dots = graph
+        .selectAll("circle")
+          .data(dataFilter)
+          .enter()
+          .append("circle")
+            .attr("cx", function (d) { return x(d.timestamp); } )
+            .attr("cy", function (d) { return y(d.score); } )
+            .attr("r", function (d) { return z(d.comms_num); } )
+            .style("fill", "green" )
+            .style("opacity", 0.3)
+          .on("mouseover", showTooltip )
+          .on("mousemove", moveTooltip )
+          .on("mouseleave", hideTooltip )
+          .on("click", clickPost);
     }
     else if (brushSelected == "DATE"){
       console.log("date brush");
 
       graph.selectAll(".brush").remove();
+      graph.selectAll("circle").remove();
 
       graph.append("g")
         .attr("class", "brush")
         .call(dateBrush)
+
+      dots = graph
+        .selectAll("circle")
+          .data(dataFilter)
+          .enter()
+          .append("circle")
+            .attr("cx", function (d) { return x(d.timestamp); } )
+            .attr("cy", function (d) { return y(d.score); } )
+            .attr("r", function (d) { return z(d.comms_num); } )
+            .style("fill", "green" )
+            .style("opacity", 0.3)
+          .on("mouseover", showTooltip )
+          .on("mousemove", moveTooltip )
+          .on("mouseleave", hideTooltip )
+          .on("click", clickPost);
+    
     }
   }
 
