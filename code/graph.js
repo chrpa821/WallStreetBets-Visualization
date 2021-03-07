@@ -261,24 +261,24 @@ d3.csv("data/reddit_wsb.csv", function(data1){
   //================================================================================
 
   var lollipop_data = [{
-    word: "word 1",
+    word: "",
     occurences: 0
   },
   {
-    word: "word 2",
-    occurences: 4
+    word: "",
+    occurences: 0
   },
   {
-    word: "word 3",
-    occurences: 3
+    word: "",
+    occurences: 0
   },
   {
-    word: "word 4",
-    occurences: 2
+    word: "",
+    occurences: 0
   },
   {
-    word: "word 5",
-    occurences: 1
+    word: "",
+    occurences: 0
   }];
 
   //Add X axis
@@ -297,31 +297,9 @@ d3.csv("data/reddit_wsb.csv", function(data1){
   var y_2 = d3.scaleBand()
     .range([ 0, height_2 ])
     .domain(lollipop_data.map(function(d) { return d.word; }))
-    .padding(0);
+    .padding(1);
   var yAxis_2 = svg_lollipop.append("g")
       .call(d3.axisLeft(y_2))
-
-  // Lines
-  var lines = svg_lollipop.selectAll("myline")
-    .data(lollipop_data)
-    .enter()
-    .append("line")
-      .attr("x1", function(d) { return x(d.occurences); })
-      .attr("x2", x_2(0))
-      .attr("y1", function(d) { return y(d.word); })
-      .attr("y2", function(d) { return y(d.word); })
-      .attr("stroke", "grey")
-    
-  // Circles
-  var circles = svg_lollipop.selectAll("mycircle")
-    .data(lollipop_data)
-    .enter()
-    .append("circle")
-      .attr("cx", function(d) { return x(d.occurences); })
-      .attr("cy", function(d) { return y(d.word); })
-      .attr("r", "7")
-      .style("fill", "#69b3a2")
-      .attr("stroke", "black")
 
   //================================================================================
   // Update Functions for Bubble Graph
@@ -432,17 +410,9 @@ d3.csv("data/reddit_wsb.csv", function(data1){
     concatString = concatString.replace(/\W*\b\w{1,2}\b/g, ""); //remove words with less than 2 letters
     
     concatString = removeUselessWords(concatString);
+
     //find keywords in selection    
     lollipop_data = findKeywords(concatString, 5);
-
-    // create a new array that follows the format
-    // lollipop_data = lollipop_array.map(function(d) {
-    //   return {
-    //     word: d[0],
-    //     occurences: d[1]
-    //   };
-    // });
-    console.log(lollipop_data);
 
     updateLollipop();
 
@@ -451,7 +421,6 @@ d3.csv("data/reddit_wsb.csv", function(data1){
   //================================================================================
   // Functions for Lollipop Graph
   //================================================================================
-
 
   function findKeywords(string, amount) {
 
@@ -477,8 +446,7 @@ d3.csv("data/reddit_wsb.csv", function(data1){
         }
         return acc;
     }, []);
-    console.log("findKeys: ")
-    console.log( result);
+
     return result;
   }
 
@@ -486,8 +454,46 @@ d3.csv("data/reddit_wsb.csv", function(data1){
 
     // Y axis
     y_2.domain(lollipop_data.map(function(d) { return d.word; }));
-
     yAxis_2.transition().call(d3.axisLeft(y_2));
+
+    // Lines
+    var lines = svg_lollipop.selectAll(".myline")
+      .data(lollipop_data);
+
+    lines
+      .enter()
+      .append("line")
+      .attr("class", "myline")
+      .merge(lines)
+      .transition()
+      .duration(1000)
+        .attr("x1", function(d) { return x_2(d.occurences); })
+        .attr("x2", x_2(0))
+        .attr("y1", function(d) { return y_2(d.word); })
+        .attr("y2", function(d) { return y_2(d.word); })
+        .attr("stroke", "grey")
+
+    lines.exit().remove();
+
+
+    // Circles
+    var circles = svg_lollipop.selectAll(".lollipop")
+      .data(lollipop_data);
+
+    circles
+      .enter()
+      .append("circle")
+      .attr("class", "lollipop")
+      .merge(circles)
+      .transition()
+      .duration(1000)
+        .attr("cx", function(d) { return x_2(d.occurences); })
+        .attr("cy", function(d) { return y_2(d.word); })
+        .attr("r", "7")
+        .style("fill", "#69b3a2")
+        .attr("stroke", "black")
+    
+    circles.exit().remove();
 
   }
 
@@ -504,18 +510,13 @@ d3.csv("data/reddit_wsb.csv", function(data1){
           "on", "or", "should", "shouldnt", "so", "such", "the", 
           "them", "they", "this", "to", "us",  "we", "what", "who", "why", 
           "with", "wont", "would", "wouldnt", "you", "there", "went", "has", 
-          "was", "when", "were", "are", "his", "get", "that", "for", "and", "not"
+          "was", "when", "were", "are", "his", "get", "that", "for", "and", "not", "from"
         ];
       
     var expStr = uselessWordsArray.join("|");
     return txt.replace(new RegExp('\\b(' + expStr + ')\\b', 'gi'), ' ')
                     .replace(/\s{2,}/g, ' ');
   }
-
-
-  // concatString.sort(function(a,b){
-  //   return a-b;
-  // })
 
   // A function that return TRUE or FALSE according if a dot is in the selection or not
   function isBrushed(brush_coords, cx, cy) {
