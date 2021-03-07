@@ -1,4 +1,4 @@
-//TODO: radius legend, color coding?, list of top posts, keywords, links to posts, fix css, add date offset in xaxis, circles should depend on area and not radius
+//TODO: radius legend, list of top posts, fix css, add date offset in xaxis, circles should depend on area and not radius
 // recalculate y axis domain after zooming in
 
 //If time: stock correlation/causation
@@ -8,7 +8,7 @@
 //================================================================================
 
 //set the dimensions and margins of the graph
-var margin = {top: 20, right: 20, bottom: 50, left: 70},
+var margin = {top: 20, right: 20, bottom: 50, left: 100},
     width = 1000 - margin.left - margin.right,
     height = 600 - margin.top - margin.bottom;
 
@@ -412,7 +412,7 @@ d3.csv("data/reddit_wsb.csv", function(data1){
     concatString = removeUselessWords(concatString);
 
     //find keywords in selection    
-    lollipop_data = findKeywords(concatString, 5);
+    lollipop_data = findKeywords(concatString, 8);
 
     updateLollipop();
 
@@ -510,7 +510,7 @@ d3.csv("data/reddit_wsb.csv", function(data1){
           "on", "or", "should", "shouldnt", "so", "such", "the", 
           "them", "they", "this", "to", "us",  "we", "what", "who", "why", 
           "with", "wont", "would", "wouldnt", "you", "there", "went", "has", 
-          "was", "when", "were", "are", "his", "get", "that", "for", "and", "not", "from"
+          "was", "when", "were", "are", "his", "get", "that", "for", "and", "not", "from", ""
         ];
       
     var expStr = uselessWordsArray.join("|");
