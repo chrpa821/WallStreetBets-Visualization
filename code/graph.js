@@ -29,18 +29,17 @@ svg.append("rect")
   .style("opacity", 0.05)
 
 //set the dimensions and margins of the graph
-var margin_2 = {top: 10, right: 10, bottom: 10, left: 10},
+var margin_2 = {top: 10, right: 10, bottom: 30, left: 50},
     width_2 = 300 - margin_2.left - margin_2.right,
-    height_2 = 600 - margin_2.top - margin_2.bottom;
+    height_2 = 400 - margin_2.top - margin_2.bottom;
 
 var svg_lollipop = d3.select("#selection")
-.append("svg")
-  .attr("width", width_2 + margin_2.left + margin_2.right)
-  .attr("height", height_2 + margin_2.top + margin_2.bottom)
-  .attr("class", "graph-svg-component")
-.append("g")
-  .attr("transform",
-        "translate(" + margin_2.left + "," + margin_2.top + ")")
+  .append("svg")
+    .attr("width", width_2 + margin_2.left + margin_2.right)
+    .attr("height", height_2 + margin_2.top + margin_2.bottom)
+  .append("g")
+    .attr("transform",
+          "translate(" + margin_2.left + "," + margin_2.top + ")")
 
 
 //read the data
@@ -217,7 +216,6 @@ d3.csv("data/reddit_wsb.csv", function(data1){
   var clickPost = function(d) {
     console.log("clicked");
     window.open(d.url , '_blank');
-
   }
 
   var areaBrush = d3.brush()            // Add the brush feature using the d3.brush function
@@ -262,53 +260,68 @@ d3.csv("data/reddit_wsb.csv", function(data1){
   // Lollipop Graph
   //================================================================================
 
-  //Find the most used words in the posts
+  var lollipop_data = [{
+    word: "word 1",
+    occurences: 0
+  },
+  {
+    word: "word 2",
+    occurences: 4
+  },
+  {
+    word: "word 3",
+    occurences: 3
+  },
+  {
+    word: "word 4",
+    occurences: 2
+  },
+  {
+    word: "word 5",
+    occurences: 1
+  }];
 
-  //concatenate all strings of selected posts
+  //Add X axis
+  var x_2 = d3.scaleLinear()
+  .domain([0, 10])
+  .range([ 0, width_2]);
 
-  
+  var xAxis_2 = svg_lollipop.append("g")
+    .attr("transform", "translate(0," + (height_2) + ")")
+    .call(d3.axisBottom(x_2))
+    .selectAll("text")
+      .attr("transform", "translate(-10,0)rotate(-45)")
+      .style("text-anchor", "end");
 
-  // // Add X axis
-  // var x_2 = d3.scaleLinear()
-  //   .domain([0, 13000])
-  //   .range([ 0, width_2]);
-  // svg_lollipop.append("g")
-  //   .attr("transform", "translate(0," + height_2 + ")")
-  //   .call(d3.axisBottom(x_2))
-  //   .selectAll("text")
-  //     .attr("transform", "translate(-10,0)rotate(-45)")
-  //     .style("text-anchor", "end");
+  // Y axis
+  var y_2 = d3.scaleBand()
+    .range([ 0, height_2 ])
+    .domain(lollipop_data.map(function(d) { return d.word; }))
+    .padding(0);
+  var yAxis_2 = svg_lollipop.append("g")
+      .call(d3.axisLeft(y_2))
 
-  // // Y axis
-  // var y_2 = d3.scaleBand()
-  //   .range([ 0, height_2 ])
-  //   .domain(data.map(function(d) { return d.score; }))
-  //   .padding(1);
-  //   svg_lollipop.append("g")
-  //   .call(d3.axisLeft(y_2))
-
-  // // Lines
-  // svg_lollipop.selectAll("myline")
-  //   .data(data)
-  //   .enter()
-  //   .append("line")
-  //     .attr("x1", function(d) { return x(d.Score); })
-  //     .attr("x2", x_2(0))
-  //     .attr("y1", function(d) { return y(d.Country); })
-  //     .attr("y2", function(d) { return y(d.Country); })
-  //     .attr("stroke", "grey")
+  // Lines
+  var lines = svg_lollipop.selectAll("myline")
+    .data(lollipop_data)
+    .enter()
+    .append("line")
+      .attr("x1", function(d) { return x(d.occurences); })
+      .attr("x2", x_2(0))
+      .attr("y1", function(d) { return y(d.word); })
+      .attr("y2", function(d) { return y(d.word); })
+      .attr("stroke", "grey")
     
-  //   // Circles
-  // svg_lollipop.selectAll("mycircle")
-  //   .data(data)
-  //   .enter()
-  //   .append("circle")
-  //     .attr("cx", function(d) { return x(d.Value); })
-  //     .attr("cy", function(d) { return y(d.Country); })
-  //     .attr("r", "7")
-  //     .style("fill", "#69b3a2")
-  //     .attr("stroke", "black")
-  // })
+  // Circles
+  var circles = svg_lollipop.selectAll("mycircle")
+    .data(lollipop_data)
+    .enter()
+    .append("circle")
+      .attr("cx", function(d) { return x(d.occurences); })
+      .attr("cy", function(d) { return y(d.word); })
+      .attr("r", "7")
+      .style("fill", "#69b3a2")
+      .attr("stroke", "black")
 
   //================================================================================
   // Update Functions for Bubble Graph
@@ -394,9 +407,13 @@ d3.csv("data/reddit_wsb.csv", function(data1){
   }
 
   var concatString = "";
+
   // Function that is triggered when brushing is performed
   function updateSelection() {
+
     var extent = d3.event.selection;
+
+    //reset string
     concatString = "";
 
     svg.selectAll("circle").classed("selected", function(d){
@@ -408,33 +425,75 @@ d3.csv("data/reddit_wsb.csv", function(data1){
         else return true;
       }
     })
+
     //console.log(concatString);
     concatString = concatString.replace(/[^a-zA-Z0-9 ]+/g, '');
     concatString = concatString.replace(/\d+|^\s+|\s+$/g,'');
     concatString = concatString.replace(/\W*\b\w{1,2}\b/g, ""); //remove words with less than 2 letters
     
     concatString = removeUselessWords(concatString);
-
     //find keywords in selection    
-    findKeyWords();
+    lollipop_data = findKeywords(concatString, 5);
+
+    // create a new array that follows the format
+    // lollipop_data = lollipop_array.map(function(d) {
+    //   return {
+    //     word: d[0],
+    //     occurences: d[1]
+    //   };
+    // });
+    console.log(lollipop_data);
+
+    updateLollipop();
+
   }
 
   //================================================================================
-  // Update Functions for Lollipop Graph
+  // Functions for Lollipop Graph
   //================================================================================
 
-  function findKeyWords(){
-    var wordCounts = { };
-    var words = concatString.split(" ");
-    
-    //The "_" + allows it to process words like constructor that are already properties of the object.
-    //https://stackoverflow.com/questions/6565333/using-javascript-to-find-most-common-words-in-string
-    for(var i = 0; i < words.length; i++){
-        wordCounts[words[i].toLowerCase()] = (wordCounts[words[i].toLowerCase()] || 0) + 1;
+
+  function findKeywords(string, amount) {
+
+    var wordsArray = string.split(/\s/);
+    var wordOccurrences = {};
+
+    for (var i = 0; i < wordsArray.length; i++) {
+        wordOccurrences['_'+wordsArray[i].toLowerCase()] = ( wordOccurrences['_'+wordsArray[i].toLowerCase()] || 0 ) + 1;
     }
-    console.log(wordCounts);
-    
+
+    var result = Object.keys(wordOccurrences).reduce(function(acc, currentKey) {
+        /* you may want to include a binary search here */
+        for (var i = 0; i < amount; i++) {
+            if (!acc[i]) {
+                acc[i] = { word: currentKey.slice(1, currentKey.length), occurences: wordOccurrences[currentKey] };
+                break;
+            } else if (acc[i].occurences < wordOccurrences[currentKey]) {
+                acc.splice(i, 0, { word: currentKey.slice(1, currentKey.length), occurences: wordOccurrences[currentKey] });
+                if (acc.length > amount)
+                    acc.pop();
+                break;
+            }
+        }
+        return acc;
+    }, []);
+    console.log("findKeys: ")
+    console.log( result);
+    return result;
   }
+
+  function updateLollipop(){
+
+    // Y axis
+    y_2.domain(lollipop_data.map(function(d) { return d.word; }));
+
+    yAxis_2.transition().call(d3.axisLeft(y_2));
+
+  }
+
+  //================================================================================
+  // Other Functions
+  //================================================================================
 
   //https://stackoverflow.com/questions/49655135/javascript-regex-remove-multiple-words-from-string
   function removeUselessWords(txt) {
@@ -445,7 +504,7 @@ d3.csv("data/reddit_wsb.csv", function(data1){
           "on", "or", "should", "shouldnt", "so", "such", "the", 
           "them", "they", "this", "to", "us",  "we", "what", "who", "why", 
           "with", "wont", "would", "wouldnt", "you", "there", "went", "has", 
-          "was", "when", "were", "are", "his", "get", "that", "for"
+          "was", "when", "were", "are", "his", "get", "that", "for", "and", "not"
         ];
       
     var expStr = uselessWordsArray.join("|");
@@ -453,9 +512,10 @@ d3.csv("data/reddit_wsb.csv", function(data1){
                     .replace(/\s{2,}/g, ' ');
   }
 
-  //================================================================================
-  // Other Functions
-  //================================================================================
+
+  // concatString.sort(function(a,b){
+  //   return a-b;
+  // })
 
   // A function that return TRUE or FALSE according if a dot is in the selection or not
   function isBrushed(brush_coords, cx, cy) {
