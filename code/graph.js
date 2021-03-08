@@ -8,7 +8,7 @@
 //================================================================================
 
 //set the dimensions and margins of the graph
-var margin = {top: 20, right: 20, bottom: 50, left: 100},
+var margin = {top: 20, right: 20, bottom: 50, left: 80},
     width = 1000 - margin.left - margin.right,
     height = 600 - margin.top - margin.bottom;
 
@@ -37,6 +37,9 @@ var svg_lollipop = d3.select("#selection")
   .append("svg")
     .attr("width", width_2 + margin_2.left + margin_2.right)
     .attr("height", height_2 + margin_2.top + margin_2.bottom)
+    .attr("class", "graph-svg-component")
+    
+
   .append("g")
     .attr("transform",
           "translate(" + margin_2.left + "," + margin_2.top + ")")
@@ -281,17 +284,20 @@ d3.csv("data/reddit_wsb.csv", function(data1){
     occurences: 0
   }];
 
+  var maxOcc = d3.max(lollipop_data, function(d) { return +d.occurences });
+  console.log(typeof maxOcc);
+
   //Add X axis
   var x_2 = d3.scaleLinear()
-  .domain([0, 10])
-  .range([ 0, width_2]);
+  .domain([0, maxOcc])
+  .range([ 0, width_2 - 20]);
 
   var xAxis_2 = svg_lollipop.append("g")
     .attr("transform", "translate(0," + (height_2) + ")")
     .call(d3.axisBottom(x_2))
-    .selectAll("text")
-      .attr("transform", "translate(-10,0)rotate(-45)")
-      .style("text-anchor", "end");
+    // .selectAll("text")
+    //   .attr("transform", "translate(-10,0)rotate(-45)")
+    //   .style("text-anchor", "end");
 
   // Y axis
   var y_2 = d3.scaleBand()
@@ -404,7 +410,6 @@ d3.csv("data/reddit_wsb.csv", function(data1){
       }
     })
 
-    //console.log(concatString);
     concatString = concatString.replace(/[^a-zA-Z0-9 ]+/g, '');
     concatString = concatString.replace(/\d+|^\s+|\s+$/g,'');
     concatString = concatString.replace(/\W*\b\w{1,2}\b/g, ""); //remove words with less than 2 letters
@@ -432,7 +437,6 @@ d3.csv("data/reddit_wsb.csv", function(data1){
     }
 
     var result = Object.keys(wordOccurrences).reduce(function(acc, currentKey) {
-        /* you may want to include a binary search here */
         for (var i = 0; i < amount; i++) {
             if (!acc[i]) {
                 acc[i] = { word: currentKey.slice(1, currentKey.length), occurences: wordOccurrences[currentKey] };
@@ -451,6 +455,22 @@ d3.csv("data/reddit_wsb.csv", function(data1){
   }
 
   function updateLollipop(){
+
+    if(lollipop_data.length < 2) return;
+
+    var maxOcc = d3.max(lollipop_data, function(d) { return +d.occurences });
+
+    x_2 = d3.scaleLinear().domain([0, maxOcc])
+      .range([ 0, width_2 - 20]);
+
+    xAxis_2
+      .attr("transform", "translate(0," + (height_2) + ")")
+      .transition()
+      .duration(1000)
+      .call(d3.axisBottom(x_2))
+      .selectAll("text")
+        .attr("transform", "translate(-10,0)rotate(-45)")
+        .style("text-anchor", "end");
 
     // Y axis
     y_2.domain(lollipop_data.map(function(d) { return d.word; }));
@@ -510,7 +530,8 @@ d3.csv("data/reddit_wsb.csv", function(data1){
           "on", "or", "should", "shouldnt", "so", "such", "the", 
           "them", "they", "this", "to", "us",  "we", "what", "who", "why", 
           "with", "wont", "would", "wouldnt", "you", "there", "went", "has", 
-          "was", "when", "were", "are", "his", "get", "that", "for", "and", "not", "from", ""
+          "was", "when", "were", "are", "his", "get", "that", "for", "and", 
+          "not", "from", "but", "its"
         ];
       
     var expStr = uselessWordsArray.join("|");
