@@ -15,7 +15,7 @@
             <div class="card-header">
                 <h2>Posts on r/WallStreetBets</h2>
             </div>
-            <div class="card-body">
+            <div class="card-body font-weight-bold">
                 <div class="d-flex align-items-center justify-content-around">
                     <div class="row">
                         <div class=" border rounded">
@@ -30,7 +30,7 @@
                                         </label>
                                     </form>
                                 </div>
-                                <div id="slider">
+                                <div id="slider" class="font-weight-bold">
                                     <p>Filter By Upvotes</p>
                                     <input autocomplete="off" type="range" name="mySlider" id=mySlider min="1" max="150000" value="10000">
                                 </div>
@@ -38,8 +38,13 @@
                             <div id="points"></div>
                         </div>
                     </div>
-                    <br></br>
-                    <div id="selection"> </div>
+                    <div class="column">
+                        <div class="border" id="selection"> </div>
+                        <div class="border font-weight-bold">
+                            <p>Number of Comments</p>
+                            <div id="size-legend"> </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

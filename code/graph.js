@@ -29,9 +29,9 @@ svg.append("rect")
   .style("opacity", 0.05)
 
 //set the dimensions and margins of the graph
-var margin_2 = {top: 10, right: 10, bottom: 30, left: 50},
+var margin_2 = {top: 20, right: 10, bottom: 50, left: 80},
     width_2 = 300 - margin_2.left - margin_2.right,
-    height_2 = 400 - margin_2.top - margin_2.bottom;
+    height_2 = 500 - margin_2.top - margin_2.bottom;
 
 var svg_lollipop = d3.select("#selection")
   .append("svg")
@@ -44,6 +44,12 @@ var svg_lollipop = d3.select("#selection")
     .attr("transform",
           "translate(" + margin_2.left + "," + margin_2.top + ")")
 
+var width_3 = 260,
+  height_3 = 160;
+
+var legend = d3.select("#size-legend")
+  .append("svg").attr("width", width_3)
+  .attr("height", height_3 )
 
 //read the data
 d3.csv("data/reddit_wsb.csv", function(data1){
@@ -81,55 +87,54 @@ d3.csv("data/reddit_wsb.csv", function(data1){
   //   .select("#score")
   //   .text("Top Score: " + maxScore)
 
-  //var legend = d3.select("#color-info").append("svg")
 
   //LEGEND
-  // The scale you use for bubble size
-  // var size = d3.scaleSqrt()
-  //   .domain([1, maxComms])  // What's in the data, let's say it is percentage
-  //   .range([2, 40])  // Size in pixel
+  //The scale you use for bubble size
+  var size = d3.scaleSqrt()
+    .domain([1, maxComms])  // What's in the data, let's say it is percentage
+    .range([2, 40])  // Size in pixel
 
   // Add legend: circles
-  // var valuesToShow = [1, 10000, 80000]
-  // var xCircle = 230
-  // var xLabel = 280
-  // var yCircle = 230
+  var valuesToShow = [100, 10000, 90000]
+  var xCircle = 130
+  var xLabel = 180
+  var yCircle = 100
 
-  // legend
-  //   .selectAll("legend")
-  //   .data(valuesToShow)
-  //   .enter()
-  //   .append("circle")
-  //     .attr("cx", xCircle)
-  //     .attr("cy", function(d){ return yCircle - size(d) } )
-  //     .attr("r", function(d){ return size(d) })
-  //     .style("fill", "none")
-  //     .attr("stroke", "green")
+  legend
+    .selectAll("legend")
+    .data(valuesToShow)
+    .enter()
+    .append("circle")
+      .attr("cx", xCircle)
+      .attr("cy", function(d){ return yCircle - size(d) } )
+      .attr("r", function(d){ return size(d) })
+      .style("fill", "none")
+      .attr("stroke", "green")
 
   // Add legend: segments
-  // legend
-  // .selectAll("legend")
-  // .data(valuesToShow)
-  // .enter()
-  // .append("line")
-  //   .attr('x1', function(d){ return xCircle + size(d) } )
-  //   .attr('x2', xLabel)
-  //   .attr('y1', function(d){ return yCircle - size(d) } )
-  //   .attr('y2', function(d){ return yCircle - size(d) } )
-  //   .attr('stroke', 'black')
-  //   .style('stroke-dasharray', ('2,2'))
+  legend
+    .selectAll("legend")
+    .data(valuesToShow)
+    .enter()
+    .append("line")
+      .attr('x1', function(d){ return xCircle + size(d) } )
+      .attr('x2', xLabel)
+      .attr('y1', function(d){ return yCircle - size(d) } )
+      .attr('y2', function(d){ return yCircle - size(d) } )
+      .attr('stroke', 'black')
+      .style('stroke-dasharray', ('2,2'))
   
   // Add legend: labels
-  // legend
-  //   .selectAll("legend")
-  //   .data(valuesToShow)
-  //   .enter()
-  //   .append("text")
-  //     .attr('x', xLabel)
-  //     .attr('y', function(d){ return yCircle - size(d) } )
-  //     .text( function(d){ return d } )
-  //     .style("font-size", 10)
-  //     .attr('alignment-baseline', 'middle')
+  legend
+    .selectAll("legend")
+    .data(valuesToShow)
+    .enter()
+    .append("text")
+      .attr('x', xLabel)
+      .attr('y', function(d){ return yCircle - size(d) } )
+      .text( function(d){ return d } )
+      .style("font-size", 10)
+      .attr('alignment-baseline', 'middle')
 
   //================================================================================
   // Bubble Graph
@@ -201,14 +206,14 @@ d3.csv("data/reddit_wsb.csv", function(data1){
       .transition()
     tooltip
       .style("opacity", 1)
-      .html(d.title)
-      .style("left", (d3.mouse(this)[0]) + "px")
-      .style("top", (d3.mouse(this)[1]) + "px")
+      .text(d.title)
+      .style("left", (d3.mouse(this)[0] ) + "px")
+      .style("top", (d3.mouse(this)[1] +100) + "px")
   }
   var moveTooltip = function(d) {
     tooltip
       .style("left", (d3.mouse(this)[0]) + "px")
-      .style("top", (d3.mouse(this)[1]) + "px")
+      .style("top", (d3.mouse(this)[1]+100) + "px")
   }
   var hideTooltip = function(d) {
     tooltip
@@ -295,9 +300,14 @@ d3.csv("data/reddit_wsb.csv", function(data1){
   var xAxis_2 = svg_lollipop.append("g")
     .attr("transform", "translate(0," + (height_2) + ")")
     .call(d3.axisBottom(x_2))
-    // .selectAll("text")
-    //   .attr("transform", "translate(-10,0)rotate(-45)")
-    //   .style("text-anchor", "end");
+
+  // text label for the X axis
+  svg_lollipop.append("text")             
+    .attr("transform",
+          "translate(" + (width_2/2) + " ," + 
+                         (height_2 + 40) + ")")
+    .style("text-anchor", "middle")
+    .text("Occurences");
 
   // Y axis
   var y_2 = d3.scaleBand()
@@ -306,6 +316,15 @@ d3.csv("data/reddit_wsb.csv", function(data1){
     .padding(1);
   var yAxis_2 = svg_lollipop.append("g")
       .call(d3.axisLeft(y_2))
+
+  // text label for the y axis
+  svg_lollipop.append("text")
+    .attr("transform", "rotate(-90)")
+    .attr("y", 0 - margin_2.left )
+    .attr("x",0 - (height_2 / 2))
+    .attr("dy", "1em")
+    .style("text-anchor", "middle")
+    .text("Keywords");
 
   //================================================================================
   // Update Functions for Bubble Graph
@@ -318,24 +337,69 @@ d3.csv("data/reddit_wsb.csv", function(data1){
     graph.select(".brush").call(dateBrush.move, null) // This remove the grey brush area as soon as the selection has been done
     //graph.select(".brush").call(areaBrush.move, null) // This remove the grey brush area as soon as the selection has been done
 
-
-    var threshold = parseInt(selectedValue);
+    var score_threshold = parseInt(selectedValue);
 
     dataFilter = data1.filter(function(d) {
-      return  d.score > threshold;
+      return  d.score > score_threshold;
     });
 
-    maxScore = d3.max(dataFilter, function(d) { return +d.score });
+    // d3.select("#mySlider2").property("value", comms);
+
+    // dataFilter = dataFilter.filter(function(d) {
+    //   return  d.comms_num > parseInt(comms);
+    // });
+
+    //maxScore = d3.max(dataFilter, function(d) { return +d.score });
     
     // tooltip
     //     .select("#score")
     //     .text("Top Score: " + maxScore)
 
-    x.domain(d3.extent(dataFilter, function(d) { return d.timestamp; }));
-    xAxis.transition().call(d3.axisBottom(x))
+    // x.domain(d3.extent(dataFilter, function(d) { return d.timestamp; }));
+    // xAxis.transition().call(d3.axisBottom(x))
 
     y.domain([-10000, maxScore+10000]);
     yAxis.transition().call(d3.axisLeft(y))    
+
+    // update points with new data
+    dots = graph.selectAll("circle")
+          .data(dataFilter);
+
+    dots
+        .attr("cx", function (d) { return x(d.timestamp); } )
+        .attr("cy", function (d) { return y(d.score); } )
+        .attr("r", function (d) { return z(d.comms_num); } )
+
+    dots.enter()
+        .append("circle")
+          .attr("cx", function (d) { return x(d.timestamp); } )
+          .attr("cy", function (d) { return y(d.score); } )
+          .attr("r", function (d) { return z(d.comms_num); } )
+          .style("fill", "green")
+          .style("opacity", 0.3)
+          .on("mouseover", showTooltip )
+          .on("mousemove", moveTooltip )
+          .on("mouseleave", hideTooltip )
+    
+    dots.exit().remove();
+
+  }
+
+  // update the score after slider is changed
+  function updateComms(selectedValue) {
+
+    //remove brush selection
+    graph.select(".brush").call(dateBrush.move, null) // This remove the grey brush area as soon as the selection has been done
+    //graph.select(".brush").call(areaBrush.move, null) // This remove the grey brush area as soon as the selection has been done
+
+    var threshold = parseInt(selectedValue);
+
+    dataFilter = data1.filter(function(d) {
+      return  d.comms_num > threshold;
+    });
+
+    // y.domain([-10000, maxScore+10000]);
+    // yAxis.transition().call(d3.axisLeft(y))    
 
     // update points with new data
     dots = graph.selectAll("circle")
@@ -417,7 +481,7 @@ d3.csv("data/reddit_wsb.csv", function(data1){
     concatString = removeUselessWords(concatString);
 
     //find keywords in selection    
-    lollipop_data = findKeywords(concatString, 8);
+    lollipop_data = findKeywords(concatString, 12);
 
     updateLollipop();
 
@@ -617,6 +681,11 @@ d3.csv("data/reddit_wsb.csv", function(data1){
     updateScore(selectedValue);
   })
 
+  // Slider for filter by comments
+  d3.select("#mySlider2").on("change", function(d){
+    var selectedValue = this.value;
+    updateComms(selectedValue);
+  })
 
   //return a string with selected brush
   var brushSelected = $('input[type=radio][name="brushSelector"]:checked').val();
