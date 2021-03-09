@@ -87,7 +87,6 @@ d3.csv("data/reddit_wsb.csv", function(data1){
   //   .select("#score")
   //   .text("Top Score: " + maxScore)
 
-
   //LEGEND
   //The scale you use for bubble size
   var size = d3.scaleSqrt()
@@ -380,6 +379,8 @@ d3.csv("data/reddit_wsb.csv", function(data1){
           .on("mouseover", showTooltip )
           .on("mousemove", moveTooltip )
           .on("mouseleave", hideTooltip )
+          .on("click", clickPost);
+
     
     dots.exit().remove();
 
@@ -420,6 +421,8 @@ d3.csv("data/reddit_wsb.csv", function(data1){
           .on("mouseover", showTooltip )
           .on("mousemove", moveTooltip )
           .on("mouseleave", hideTooltip )
+          .on("click", clickPost);
+
     
     dots.exit().remove();
 
